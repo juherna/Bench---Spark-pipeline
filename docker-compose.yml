@@ -1,0 +1,93 @@
+version: '3'
+
+services:
+
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ""
+      MONGO_INITDB_ROOT_PASSWORD: ""
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports: 
+      - "8081:8081"
+    depends_on:
+      - mongo
+    environment:
+      ME_CONFIG_MONGODB_SERVER: "mongo"
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ""
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ""
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181"
+      
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    hostname: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9080:9080"
+      - "9082:9082"
+    volumes:
+      - ./monitoring/kafka-prometheus:/opt/jmx-exporter/        
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka # use localhost for single broker
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "topicname:1:1"
+      JMX_PORT: "9997"
+      KAFKA_JMX_OPTS: "-javaagent:/opt/jmx-exporter/jmx_prometheus_javaagent-0.12.0.jar=9082:/opt/jmx-exporter/kafka.yml -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" 
+
+  prometheus:
+    container_name: prometheus
+    hostname: prometheus
+    ports:
+      - "9090"
+    image: prom/prometheus:0.18.0
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+     - kafka  
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    user: "0"
+    volumes:
+     - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning
+    depends_on:
+      - "prometheus"
+      
+  application:
+    build: ./application
+    restart: on-failure
+    ports:
+      - "80"
+    depends_on:
+      - mongo
+      - kafka
+
+
+
+
+
+
+
+
+
+
+
+
+
