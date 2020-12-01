@@ -2,7 +2,7 @@
 
 <h3>Objective</h3>
 
-<h3>Evirorment Installation</h3>
+<h3>Envirorment Installation</h3>
 
 <h4>1 - WSL2 Activation and Configuration</h4>
 
