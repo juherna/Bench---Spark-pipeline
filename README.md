@@ -18,7 +18,7 @@ https://docs.docker.com/docker-for-windows/install/
 
 <h4>3 - Docker WSL Configuration</h4>
 
-Once you have WSL2 configurated and Docker installed, you would be able to use the Docker Desktop on Windows integration with WSL using the Linux OS installed, follow this instructions to configure the integration:
+Once you have WSL2 configurated and Docker installed, you would be able to use the Docker Desktop on Windows integration with WSL using the Linux distribution installed for it, follow these instructions to configure the integration:
 
 https://docs.docker.com/docker-for-windows/wsl/
 
