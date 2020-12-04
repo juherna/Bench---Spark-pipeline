@@ -40,7 +40,7 @@ services:
       - "9080:9080"
       - "9082:9082"
     volumes:
-      - ./monitoring/kafka-prometheus:/opt/jmx-exporter/        
+      - ./monitoring-kafka/kafka-prometheus:/opt/jmx-exporter/        
     environment:
       KAFKA_ADVERTISED_HOST_NAME: kafka # use localhost for single broker
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -55,7 +55,7 @@ services:
       - "9090"
     image: prom/prometheus:0.18.0
     volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring-kafka/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     depends_on:
      - kafka  
 
@@ -66,9 +66,20 @@ services:
       - "3000:3000"
     user: "0"
     volumes:
-     - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning
+     - ./visualization/provisioning/:/etc/grafana/provisioning
     depends_on:
-      - "prometheus"
+      - prometheus
+      - monitoring
+     
+  monitoring:
+    build: ./monitoring-spark
+    hostname: monitoring
+    restart: on-failure
+    ports:
+      - "2003:2003" 
+      - "8086:8086"
+    depends_on:
+      - application
       
   application:
     build: ./application

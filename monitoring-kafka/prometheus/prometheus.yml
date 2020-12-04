@@ -1,0 +1,8 @@
+global:
+  scrape_interval:     5s # By default, scrape targets every 20 seconds.
+  evaluation_interval: 5s # By default, scrape targets every 20 seconds.
+scrape_configs:
+  - job_name: 'kafka'
+    scrape_interval: 5s
+    target_groups:
+      - targets: ['kafka:9082']          
