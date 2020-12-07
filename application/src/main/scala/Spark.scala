@@ -78,6 +78,7 @@ object SparkStructuredStreamer {
 	    def process(record: Row): Unit = {
 		    // Write string to connection
 		    MongoDBConnection.insert(record(0).toString())
+			MongoDBConnection.insert_trans("{\"tamanio\":" + record(0).toString().size.toString() + "}")
 	    }
 	    def close(errorOrNull: Throwable): Unit = {
 	    	Unit
