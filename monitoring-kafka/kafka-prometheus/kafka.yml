@@ -5,6 +5,10 @@ rules:
 - pattern : kafka.network<type=SocketServer, name=NetworkProcessorAvgIdlePercent><>Value
 - pattern : kafka.server<type=ReplicaFetcherManager, name=MaxLag, clientId=(.+)><>Value
 - pattern : kafka.server<type=BrokerTopicMetrics, name=(.+), topic=(.+)><>OneMinuteRate
+- pattern : kafka.server<type=BrokerTopicMetrics, name=BytesInPerSec><>Count
+- pattern : kafka.server<type=BrokerTopicMetrics, name=BytesInPerSec, topic=(.+)><>Count
+- pattern : kafka.server<type=BrokerTopicMetrics, name=BytesOutPerSec><>Count
+- pattern : kafka.server<type=BrokerTopicMetrics, name=BytesOutPerSec, topic=(.+)><>Count
 - pattern : kafka.server<type=KafkaRequestHandlerPool, name=RequestHandlerAvgIdlePercent><>OneMinuteRate
 - pattern : kafka.server<type=Produce><>queue-size
 - pattern : kafka.server<type=ReplicaManager, name=(.+)><>(Value|OneMinuteRate)
