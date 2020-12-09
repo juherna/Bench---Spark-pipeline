@@ -15,7 +15,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 7,
   "links": [],
   "panels": [
     {
@@ -31,7 +30,9 @@
       "type": "row"
     },
     {
-      "aliasColors": {},
+      "aliasColors": {
+        "{instance=\"kafka:9082\", job=\"kafka\"}": "yellow"
+      },
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -104,14 +105,16 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:755",
           "format": "short",
-          "label": null,
+          "label": "Cores",
           "logBase": 1,
           "max": null,
           "min": null,
           "show": true
         },
         {
+          "$$hashKey": "object:756",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -126,7 +129,9 @@
       }
     },
     {
-      "aliasColors": {},
+      "aliasColors": {
+        "{instance=\"kafka:9082\", job=\"kafka\"}": "yellow"
+      },
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -199,14 +204,16 @@
       },
       "yaxes": [
         {
-          "format": "short",
-          "label": null,
+          "$$hashKey": "object:723",
+          "format": "bytes",
+          "label": "Memory",
           "logBase": 1,
           "max": null,
           "min": null,
           "show": true
         },
         {
+          "$$hashKey": "object:724",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -221,7 +228,9 @@
       }
     },
     {
-      "aliasColors": {},
+      "aliasColors": {
+        "{instance=\"kafka:9082\", job=\"kafka\"}": "yellow"
+      },
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -294,14 +303,16 @@
       },
       "yaxes": [
         {
-          "format": "short",
-          "label": null,
+          "$$hashKey": "object:691",
+          "format": "percentunit",
+          "label": "% time in GC",
           "logBase": 1,
           "max": null,
           "min": null,
           "show": true
         },
         {
+          "$$hashKey": "object:692",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -377,9 +388,9 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "kafka_controller_controllerstats_oneminuterate",
+          "expr": "kafka_server_brokertopicmetrics_oneminuterate{instance=\"kafka:9082\", job=\"kafka\", name=\"MessagesInPerSec\", topic=\"topicname\"}",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "{{topic}}",
           "refId": "A"
         }
       ],
@@ -403,14 +414,16 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:659",
           "format": "short",
-          "label": null,
+          "label": "Messages/s",
           "logBase": 1,
           "max": null,
           "min": null,
           "show": true
         },
         {
+          "$$hashKey": "object:660",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -472,9 +485,9 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "kafka_server_brokertopicmetrics_oneminuterate",
+          "expr": "kafka_server_brokertopicmetrics_oneminuterate{instance=\"kafka:9082\", job=\"kafka\", name=\"BytesInPerSec\", topic=\"topicname\"}",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "{{topic}}",
           "refId": "A"
         }
       ],
@@ -498,14 +511,16 @@
       },
       "yaxes": [
         {
-          "format": "short",
-          "label": null,
+          "$$hashKey": "object:583",
+          "format": "Bps",
+          "label": "Bytes/s",
           "logBase": 1,
           "max": null,
           "min": null,
           "show": true
         },
         {
+          "$$hashKey": "object:584",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -567,9 +582,9 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "kafka_utils_throttler_oneminuterate",
+          "expr": "kafka_server_brokertopicmetrics_oneminuterate{instance=\"kafka:9082\", job=\"kafka\", name=\"BytesOutPerSec\", topic=\"topicname\"}",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "{{topic}}",
           "refId": "A"
         }
       ],
@@ -593,14 +608,16 @@
       },
       "yaxes": [
         {
-          "format": "short",
-          "label": null,
+          "$$hashKey": "object:551",
+          "format": "Bps",
+          "label": "Bytes/s",
           "logBase": 1,
           "max": null,
           "min": null,
           "show": true
         },
         {
+          "$$hashKey": "object:552",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -629,7 +646,9 @@
       "type": "row"
     },
     {
-      "aliasColors": {},
+      "aliasColors": {
+        "total.used.sum": "yellow"
+      },
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -637,7 +656,24 @@
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "custom": {}
+          "custom": {
+            "align": null,
+            "filterable": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -680,7 +716,7 @@
           "groupBy": [
             {
               "params": [
-                "$__interval"
+                "10s"
               ],
               "type": "time"
             },
@@ -706,7 +742,7 @@
               },
               {
                 "params": [],
-                "type": "mean"
+                "type": "sum"
               }
             ]
           ],
@@ -755,7 +791,9 @@
       }
     },
     {
-      "aliasColors": {},
+      "aliasColors": {
+        "job.allJobs.count": "yellow"
+      },
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -772,131 +810,6 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 14
-      },
-      "hiddenSeries": false,
-      "id": 6,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "7.3.4",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "measurement": "direct.capacity",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Direct Capacity",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "influx-graphite",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
-        "overrides": []
-      },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 16,
         "y": 14
       },
       "hiddenSeries": false,
@@ -930,7 +843,7 @@
           "groupBy": [
             {
               "params": [
-                "$__interval"
+                "10s"
               ],
               "type": "time"
             },
@@ -944,7 +857,7 @@
           "measurement": "job.allJobs",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT mean(\"value\") FROM \"job.allJobs\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+          "query": "SELECT count(\"value\") FROM \"messageProcessingTime.count\" WHERE $timeFilter GROUP BY time(10s) fill(null)",
           "rawQuery": false,
           "refId": "A",
           "resultFormat": "time_series",
@@ -958,7 +871,7 @@
               },
               {
                 "params": [],
-                "type": "mean"
+                "type": "count"
               }
             ]
           ],
@@ -985,6 +898,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:818",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -993,6 +907,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:819",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1007,7 +922,11 @@
       }
     },
     {
-      "aliasColors": {},
+      "aliasColors": {
+        "direct.capacity.sum": "yellow",
+        "messageProcessingTime.m15_rate.distinct": "yellow",
+        "messageProcessingTime.mean.mean": "yellow"
+      },
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -1023,11 +942,11 @@
       "gridPos": {
         "h": 6,
         "w": 8,
-        "x": 0,
-        "y": 20
+        "x": 16,
+        "y": 14
       },
       "hiddenSeries": false,
-      "id": 30,
+      "id": 6,
       "legend": {
         "avg": false,
         "current": false,
@@ -1057,7 +976,7 @@
           "groupBy": [
             {
               "params": [
-                "$__interval"
+                "10s"
               ],
               "type": "time"
             },
@@ -1068,7 +987,7 @@
               "type": "fill"
             }
           ],
-          "measurement": "processingRate-total",
+          "measurement": "messageProcessingTime.mean",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
@@ -1094,7 +1013,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "processingRate-total",
+      "title": "Average Messaging Processing Time",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1150,7 +1069,7 @@
       "gridPos": {
         "h": 6,
         "w": 8,
-        "x": 8,
+        "x": 0,
         "y": 20
       },
       "hiddenSeries": false,
@@ -1184,7 +1103,7 @@
           "groupBy": [
             {
               "params": [
-                "$__interval"
+                "10s"
               ],
               "type": "time"
             },
@@ -1210,7 +1129,7 @@
               },
               {
                 "params": [],
-                "type": "mean"
+                "type": "sum"
               }
             ]
           ],
@@ -1222,6 +1141,131 @@
       "timeRegions": [],
       "timeShift": null,
       "title": "inputRate-total",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "influx-graphite",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 20
+      },
+      "hiddenSeries": false,
+      "id": 30,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.3.4",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [
+            {
+              "params": [
+                "10s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "processingRate-total",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "processingRate-total",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1309,7 +1353,7 @@
           "groupBy": [
             {
               "params": [
-                "$__interval"
+                "10s"
               ],
               "type": "time"
             },
@@ -1335,7 +1379,7 @@
               },
               {
                 "params": [],
-                "type": "mean"
+                "type": "sum"
               }
             ]
           ],
@@ -1399,5 +1443,5 @@
   "timezone": "",
   "title": "performance",
   "uid": "fRiBi71Gz",
-  "version": 3
+  "version": 8
 }
