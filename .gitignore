@@ -1,0 +1,10 @@
+**/bin/
+**/target/
+**/streams/
+.classpath
+.project
+.idea
+.settings
+*.prefs
+.cache-main
+**/application.conf

@@ -22,19 +22,16 @@ object SparkStructuredStreamer {
 							.master(sparkconfig.getString("MASTER_URL"))
 							.config("spark.sql.streaming.metricsEnabled","true")
 							.config("spark.metrics.appStatusSource.enabled","true")
-							.config("spark.metrics.conf.driver.sink.graphite.class","org.apache.spark.metrics.sink.GraphiteSink")
-							.config("spark.metrics.conf.executor.sink.graphite.class","org.apache.spark.metrics.sink.GraphiteSink")
-							.config("spark.metrics.conf.*.sink.graphite.host","monitoring")
-							.config("spark.metrics.conf.*.sink.graphite.port",2003)
-							.config("spark.metrics.conf.*.sink.graphite.period",10)
-							.config("spark.metrics.conf.*.sink.graphite.unit","seconds")
-							.config("spark.metrics.conf.*.sink.graphite.prefix","lucatest")	
-							.config("spark.metrics.conf.*.source.jvm.class","org.apache.spark.metrics.source.JvmSource")
 							.appName("TweetStream")
 							.getOrCreate()
 
 	spark.sparkContext.setLogLevel("WARN")
 
+	import events.EventCollector
+	val listener = new EventCollector()
+	spark.streams.addListener(listener)
+	
+	
 	import spark.implicits._
 
 	val kafkaconfig = ConfigFactory.load().getConfig("kafka")
