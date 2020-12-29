@@ -44,7 +44,7 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: kafka # use localhost for single broker
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: "topicname:1:1"
+      KAFKA_CREATE_TOPICS: "sparkevents:1:1,topicname:1:1"
       JMX_PORT: "9997"
       KAFKA_JMX_OPTS: "-javaagent:/opt/jmx-exporter/jmx_prometheus_javaagent-0.12.0.jar=9082:/opt/jmx-exporter/kafka.yml -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" 
 
@@ -89,16 +89,3 @@ services:
     depends_on:
       - mongo
       - kafka
-
-
-
-
-
-
-
-
-
-
-
-
-
