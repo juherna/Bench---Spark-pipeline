@@ -1,6 +1,8 @@
 # Bench---Spark-pipeline
 
-<h3>Objective</h3>
+<h3>Architecture</h3>
+
+![alt text](https://github.com/juherna/Bench---Spark-pipeline/blob/master/Pipeline.png)
 
 <h3>Envirorment Installation</h3>
 
