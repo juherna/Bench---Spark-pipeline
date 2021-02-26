@@ -8,3 +8,5 @@
 *.prefs
 .cache-main
 **/application.conf
+.vscode/
+.metals/*

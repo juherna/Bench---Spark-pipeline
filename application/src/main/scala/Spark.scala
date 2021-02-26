@@ -68,6 +68,41 @@ object SparkStructuredStreamer {
 	// Transforms and preprocessing can be done here
 	val selectds = ds.selectExpr("CAST(value AS STRING)") // deserialize binary back to String type
 
+	// // Forma 1 de hacerlo
+	// // Es necesario importar lo siguiente
+	// import org.apache.spark.sql.functions.from_json
+	// import org.apache.spark.sql.types.{StructType, StructField, StringType, ArrayType, LongType}
+	// 
+	// val tweet_schema = StructType(List(
+	// 	StructField(
+	// 		"entities", StructType(List(
+	// 			StructField(
+	// 				"hashtags", ArrayType(
+	// 					StructType(List(
+	// 						StructField(
+	// 							"indices", ArrayType(LongType,true),true
+	// 						),
+	// 						StructField(
+	// 							"text", StringType,true
+	// 						)
+	// 					)),
+	// 					true
+	// 				),
+	// 				true
+	// 			)
+	// 		)),
+	// 		true
+	// 	)
+	// ))
+	// val ds_json_readed_0 = selectds.withColumn("tweet_simple", from_json($"value",tweet_schema))
+
+	//forma 2 de hacerlo
+	val str_tweet = "entities STRUCT<hashtags: ARRAY<STRUCT<indices: ARRAY<LONG>, text: STRING>>>"
+	val ds_json_readed_0 = selectds.selectExpr("value", s"from_json( value, '$str_tweet' ) as tweet_simple")
+
+	// Extract hastaghs as json array
+	val ds_json_readed = ds_json_readed_0.selectExpr("value", "to_json(tweet_simple.entities.hashtags.text) as tweet_simple")
+
 	// // We must create a custom sink for MongoDB
 	// // ForeachWriter is the contract for a foreach writer that is a streaming format that controls streaming writes.
 	val customwriter = new ForeachWriter[Row] {
@@ -78,13 +113,14 @@ object SparkStructuredStreamer {
 		    // Write string to connection
 		    MongoDBConnection.insert(record(0).toString())
 			MongoDBConnection.insert_trans("{\"tamanio\":" + record(0).toString().size.toString() + "}")
+			MongoDBConnection.insert_hastags(s"{tags: ${record(1)}}")
 	    }
 	    def close(errorOrNull: Throwable): Unit = {
 	    	Unit
     	}
   	}
 
-	val writedf = selectds.writeStream
+	val writedf = ds_json_readed.writeStream
 						  .foreach(customwriter)
 						  .start()
 	writedf.awaitTermination()

@@ -11,6 +11,7 @@ object MongoDBConnection {
 	val database_name:String = mongodbconfig.getString("DATABASE")
 	val collection_name:String = mongodbconfig.getString("COLLECTION")
 	val collection_name2:String = mongodbconfig.getString("COLLECTION2")
+	val collection_name3:String = mongodbconfig.getString("COLLECTION3")
 
 	val mongoclient:MongoClient = MongoClient(connection_string)	
 	val database:MongoDatabase = mongoclient.getDatabase(database_name)
@@ -38,5 +39,12 @@ object MongoDBConnection {
 		observable.subscribe(observer)
 	}
 
+	def insert_hastags(JSONString:String) {
+		val collection:MongoCollection[Document] = database.getCollection(collection_name3)
+		val observable: Observable[Completed] = collection.insertOne(Document(JSONString))
+
+		// Explicitly subscribe
+		observable.subscribe(observer)
+	}
 
 }
