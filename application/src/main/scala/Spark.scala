@@ -97,11 +97,38 @@ object SparkStructuredStreamer {
 	// val ds_json_readed_0 = selectds.withColumn("tweet_simple", from_json($"value",tweet_schema))
 
 	//forma 2 de hacerlo
-	val str_tweet = "entities STRUCT<hashtags: ARRAY<STRUCT<indices: ARRAY<LONG>, text: STRING>>>"
-	val ds_json_readed_0 = selectds.selectExpr("value", s"from_json( value, '$str_tweet' ) as tweet_simple")
+	val str_tweet = """STRUCT<
+    ------------------------- HASHTAGS -------------------------
+    entities:STRUCT<
+        hashtags: ARRAY<STRUCT<
+            indices: ARRAY<LONG>,
+            text: STRING
+        >>
+    >,
+    --------------------- TWEET HOUR ---------------------
+    created_at:STRING,
+    ---------------------- USER DATA ------------------------
+    user:STRUCT<
+        description:STRING,
+        name:STRING,
+        screen_name:STRING,
+        location:STRING,
+        followers_count:LONG>
+>"""
 
-	// Extract hastaghs as json array
-	val ds_json_readed = ds_json_readed_0.selectExpr("value", "to_json(tweet_simple.entities.hashtags.text) as tweet_simple")
+	val df1 = selectds.selectExpr("value", s"from_json( value, '$str_tweet' ) as tweet_simple")
+
+	// Extract data processed
+	spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY");
+	import org.apache.spark.sql.functions.to_json
+	val data_processed = df1.select($"value", to_json($"tweet_simple.entities.hashtags.text"), from_unixtime(
+    unix_timestamp($"tweet_simple.created_at","EEE MMM dd HH:mm:ss ZZZZ yyyy")).alias("tweet_date"), 
+    lower($"tweet_simple.user.description").alias("user_description"),
+    lower($"tweet_simple.user.name").alias("user_name"),
+    //lower($"tweet_simple.user.screen_name").alias("user_username"),
+    lower($"tweet_simple.user.location").alias("user_location"),
+    $"tweet_simple.user.followers_count".alias("user_followers"))
+
 
 	// // We must create a custom sink for MongoDB
 	// // ForeachWriter is the contract for a foreach writer that is a streaming format that controls streaming writes.
@@ -111,16 +138,21 @@ object SparkStructuredStreamer {
 	    }
 	    def process(record: Row): Unit = {
 		    // Write string to connection
-		    MongoDBConnection.insert(record(0).toString())
-			MongoDBConnection.insert_trans("{\"tamanio\":" + record(0).toString().size.toString() + "}")
-			MongoDBConnection.insert_hastags(s"{tags: ${record(1)}}")
+		    MongoDBConnection.insert(s"{value: ${record(0)}}")
+			MongoDBConnection.insert_trans("{\"size\":" + record(0).toString().size.toString() + "}")
+			MongoDBConnection.insert_hastags(s"""{"hashtags": ${record(1)}}""")
+			MongoDBConnection.insert_tweet_date(s"""{"tweet_date": "${record(2)}"}""")
+			MongoDBConnection.insert_user_description(s"""{"user_description": "${record(3)}"}""")
+			MongoDBConnection.insert_user_name(s"""{"user_name": "${record(4)}"}""")
+			MongoDBConnection.insert_user_location(s"""{"user_location": "${record(5)}"}""")
+			MongoDBConnection.insert_user_followers(s"""{"followers": "${record(6)}"}""")
 	    }
 	    def close(errorOrNull: Throwable): Unit = {
 	    	Unit
     	}
   	}
 
-	val writedf = ds_json_readed.writeStream
+	val writedf = data_processed.writeStream
 						  .foreach(customwriter)
 						  .start()
 	writedf.awaitTermination()
