@@ -33,7 +33,8 @@ libraryDependencies ++= Seq(
 	"org.twitter4j" % "twitter4j-stream" % "4.0.4",
 	"org.apache.kafka" %% "kafka" % "0.10.2.2",
 	"com.typesafe" % "config" % "1.3.3",
-	"org.mongodb.scala" %% "mongo-scala-driver" % "2.4.2"
+	"org.mongodb.scala" %% "mongo-scala-driver" % "2.4.2",
+	"org.apache.commons" % "commons-text" % "1.9"
 )
 
 // Here, `libraryDependencies` is a set of dependencies, and by using `+=`,

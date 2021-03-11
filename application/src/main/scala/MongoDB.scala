@@ -17,6 +17,7 @@ object MongoDBConnection {
 	val collection_name6:String = mongodbconfig.getString("COLLECTION6")
 	val collection_name7:String = mongodbconfig.getString("COLLECTION7")
 	val collection_name8:String = mongodbconfig.getString("COLLECTION8")
+	val collection_name9:String = mongodbconfig.getString("COLLECTION9")
 
 	val mongoclient:MongoClient = MongoClient(connection_string)	
 	val database:MongoDatabase = mongoclient.getDatabase(database_name)
@@ -86,6 +87,14 @@ object MongoDBConnection {
 
 	def insert_user_followers(JSONString:String) {
 		val collection:MongoCollection[Document] = database.getCollection(collection_name8)
+		val observable: Observable[Completed] = collection.insertOne(Document(JSONString))
+
+		// Explicitly subscribe
+		observable.subscribe(observer)
+	}
+
+		def insert_keywords(JSONString:String) {
+		val collection:MongoCollection[Document] = database.getCollection(collection_name9)
 		val observable: Observable[Completed] = collection.insertOne(Document(JSONString))
 
 		// Explicitly subscribe

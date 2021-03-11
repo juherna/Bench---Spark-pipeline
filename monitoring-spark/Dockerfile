@@ -16,6 +16,8 @@ RUN set -ex && \
 COPY influxdb.conf /etc/influxdb/influxdb.conf
 COPY entrypoint.sh /opt/entrypoint.sh
 
+RUN chmod +x /opt/entrypoint.sh
+
 # expose influxdb graphite (2003) and http (8086) endpoints
 EXPOSE 2003/tcp 8086/tcp
 

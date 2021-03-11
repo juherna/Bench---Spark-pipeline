@@ -9,7 +9,8 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.ForeachWriter
-
+import org.apache.spark.sql.functions.to_json
+import org.apache.commons.text.StringEscapeUtils
 
 import com.typesafe.config.ConfigFactory
 
@@ -68,35 +69,6 @@ object SparkStructuredStreamer {
 	// Transforms and preprocessing can be done here
 	val selectds = ds.selectExpr("CAST(value AS STRING)") // deserialize binary back to String type
 
-	// // Forma 1 de hacerlo
-	// // Es necesario importar lo siguiente
-	// import org.apache.spark.sql.functions.from_json
-	// import org.apache.spark.sql.types.{StructType, StructField, StringType, ArrayType, LongType}
-	// 
-	// val tweet_schema = StructType(List(
-	// 	StructField(
-	// 		"entities", StructType(List(
-	// 			StructField(
-	// 				"hashtags", ArrayType(
-	// 					StructType(List(
-	// 						StructField(
-	// 							"indices", ArrayType(LongType,true),true
-	// 						),
-	// 						StructField(
-	// 							"text", StringType,true
-	// 						)
-	// 					)),
-	// 					true
-	// 				),
-	// 				true
-	// 			)
-	// 		)),
-	// 		true
-	// 	)
-	// ))
-	// val ds_json_readed_0 = selectds.withColumn("tweet_simple", from_json($"value",tweet_schema))
-
-	//forma 2 de hacerlo
 	val str_tweet = """STRUCT<
     ------------------------- HASHTAGS -------------------------
     entities:STRUCT<
@@ -105,29 +77,91 @@ object SparkStructuredStreamer {
             text: STRING
         >>
     >,
-    --------------------- TWEET HOUR ---------------------
+    ------------------------ TWEET HOUR ------------------------
     created_at:STRING,
-    ---------------------- USER DATA ------------------------
+    ------------------------ USER DATA -------------------------
     user:STRUCT<
         description:STRING,
         name:STRING,
         screen_name:STRING,
         location:STRING,
-        followers_count:LONG>
+        followers_count:LONG
+	>,
+	--------------------- TEXTOS DEL TWEET ---------------------
+	extended_tweet:STRUCT<
+		full_text:STRING
+	>,
+	quoted_status:STRUCT<
+		extended_tweet:STRUCT<
+			full_text:STRING
+		>,
+		text:STRING
+	>,
+	retweeted_status:STRUCT<
+		extended_tweet:STRUCT<
+			full_text:STRING
+		>,
+		quoted_status:STRUCT<
+			extended_tweet:STRUCT<
+				full_text:STRING
+			>,
+			text:STRING
+		>
+	>,
+	text:STRING
 >"""
 
 	val df1 = selectds.selectExpr("value", s"from_json( value, '$str_tweet' ) as tweet_simple")
+	val df2 = df1.selectExpr(
+		"value",
+		"tweet_simple",
+		"""
+		concat_ws(
+			'\\n',
+			nvl(tweet_simple.extended_tweet.full_text                                , ''),
+			nvl(tweet_simple.quoted_status.extended_tweet.full_text                  , ''),
+			nvl(tweet_simple.quoted_status.text                                      , ''),
+			nvl(tweet_simple.retweeted_status.extended_tweet.full_text               , ''),
+			nvl(tweet_simple.retweeted_status.quoted_status.extended_tweet.full_text , ''),
+			nvl(tweet_simple.retweeted_status.quoted_status.text                     , ''),
+			nvl(tweet_simple.text                                                    , '')
+		) as whole_text
+		"""
+	)
+
+	val tweetconfig = ConfigFactory.load().getConfig("tweetfilters")
+	val pattern     = tweetconfig.getString("KEYWORDS").toLowerCase().split(",")
+
+	// Creating an array with the corpus of the json, calculating the existance of the keywords
+	val kw_json0 = (for {word <- pattern} yield s"""${word}":',if(lower(whole_text) rlike '${word}',"1","0")""")
+	// Concatenating the array and completing the separators of the string
+	val kw_json1 = kw_json0.mkString(",',\"")
+	// putting the starting and the ending of the concat function in sql
+	val kw_json2 = "concat('{\"" + kw_json1 + ",'}') as keywords"
+	println(kw_json2)
+
+	val df3 = df2.selectExpr(
+		"value",
+		"tweet_simple",
+		"whole_text",
+		kw_json2
+	)
 
 	// Extract data processed
 	spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY");
-	import org.apache.spark.sql.functions.to_json
-	val data_processed = df1.select($"value", to_json($"tweet_simple.entities.hashtags.text"), from_unixtime(
-    unix_timestamp($"tweet_simple.created_at","EEE MMM dd HH:mm:ss ZZZZ yyyy")).alias("tweet_date"), 
-    lower($"tweet_simple.user.description").alias("user_description"),
-    lower($"tweet_simple.user.name").alias("user_name"),
-    //lower($"tweet_simple.user.screen_name").alias("user_username"),
-    lower($"tweet_simple.user.location").alias("user_location"),
-    $"tweet_simple.user.followers_count".alias("user_followers"))
+	val data_processed = df3.select(
+		$"value",
+		to_json($"tweet_simple.entities.hashtags.text"),
+		from_unixtime(
+			unix_timestamp($"tweet_simple.created_at","EEE MMM dd HH:mm:ss ZZZZ yyyy")
+		).alias("tweet_date"), 
+		lower($"tweet_simple.user.description").alias("user_description"),
+		lower($"tweet_simple.user.name").alias("user_name"),
+		//lower($"tweet_simple.user.screen_name").alias("user_username"),
+		lower($"tweet_simple.user.location").alias("user_location"),
+		$"tweet_simple.user.followers_count".alias("user_followers"),
+		$"keywords"
+	)
 
 
 	// // We must create a custom sink for MongoDB
@@ -137,15 +171,24 @@ object SparkStructuredStreamer {
 	    	true
 	    }
 	    def process(record: Row): Unit = {
+
+			// Checking and escaping the values to save
+			val tweet_date_txt 			= if(record(2) != null) "\"" + StringEscapeUtils.escapeJson(record(2).toString()) + "\"" else "null"
+			val user_description_txt 	= if(record(3) != null) "\"" + StringEscapeUtils.escapeJson(record(3).toString()) + "\"" else "null"
+			val user_name_txt 			= if(record(4) != null) "\"" + StringEscapeUtils.escapeJson(record(4).toString()) + "\"" else "null"
+			val user_location_txt 		= if(record(5) != null) "\"" + StringEscapeUtils.escapeJson(record(5).toString()) + "\"" else "null"
+			val user_followers_txt 		= if(record(6) != null) "\"" + StringEscapeUtils.escapeJson(record(6).toString()) + "\"" else "null"
+
 		    // Write string to connection
 		    MongoDBConnection.insert(s"{value: ${record(0)}}")
 			MongoDBConnection.insert_trans("{\"size\":" + record(0).toString().size.toString() + "}")
 			MongoDBConnection.insert_hastags(s"""{"hashtags": ${record(1)}}""")
-			MongoDBConnection.insert_tweet_date(s"""{"tweet_date": "${record(2)}"}""")
-			MongoDBConnection.insert_user_description(s"""{"user_description": "${record(3)}"}""")
-			MongoDBConnection.insert_user_name(s"""{"user_name": "${record(4)}"}""")
-			MongoDBConnection.insert_user_location(s"""{"user_location": "${record(5)}"}""")
-			MongoDBConnection.insert_user_followers(s"""{"followers": "${record(6)}"}""")
+			MongoDBConnection.insert_tweet_date(s"""{"tweet_date": ${tweet_date_txt}}""")
+			MongoDBConnection.insert_user_description(s"""{"user_description": ${user_description_txt}}""")
+			MongoDBConnection.insert_user_name(s"""{"user_name": ${user_name_txt}}""")
+			MongoDBConnection.insert_user_location(s"""{"user_location": ${user_location_txt}}""")
+			MongoDBConnection.insert_user_followers(s"""{"followers": ${user_followers_txt}}""")
+			MongoDBConnection.insert_keywords(s"${record(7)}")
 	    }
 	    def close(errorOrNull: Throwable): Unit = {
 	    	Unit
